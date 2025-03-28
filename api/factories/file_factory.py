@@ -196,7 +196,7 @@ def _build_from_remote_url(
         raise ValueError("Invalid file url")
 
     mime_type, filename, file_size = _get_remote_file_info(url)
-    extension = mimetypes.guess_extension(mime_type) or "." + filename.split(".")[-1] if "." in filename else ".bin"
+    extension = mimetypes.guess_extension(mime_type) or ("." + filename.split(".")[-1] if "." in filename else ".bin")
 
     file_type = FileType(mapping.get("type", "custom"))
     file_type = _standardize_file_type(file_type, extension=extension, mime_type=mime_type)
@@ -289,9 +289,15 @@ def _is_file_valid_with_config(
     ):
         return False
 
-    if input_file_type == FileType.IMAGE and config.image_config:
-        if config.image_config.transfer_methods and file_transfer_method not in config.image_config.transfer_methods:
+    if input_file_type == FileType.IMAGE:
+        if (
+            config.image_config
+            and config.image_config.transfer_methods
+            and file_transfer_method not in config.image_config.transfer_methods
+        ):
             return False
+    elif config.allowed_file_upload_methods and file_transfer_method not in config.allowed_file_upload_methods:
+        return False
 
     return True
 
