@@ -6,7 +6,6 @@ export let apiPrefix = ''
 export let publicApiPrefix = ''
 export let marketplaceApiPrefix = ''
 export let marketplaceUrlPrefix = ''
-
 // NEXT_PUBLIC_API_PREFIX=/console/api NEXT_PUBLIC_PUBLIC_API_PREFIX=/api npm run start
 if (process.env.NEXT_PUBLIC_API_PREFIX && process.env.NEXT_PUBLIC_PUBLIC_API_PREFIX) {
   apiPrefix = process.env.NEXT_PUBLIC_API_PREFIX
@@ -29,6 +28,10 @@ else {
   marketplaceApiPrefix = 'http://localhost:5002/api'
 }
 
+process.env.NEXT_PUBLIC_MARKETPLACE_URL_PREFIX = 'https://marketplace.dify.ai'
+process.env.NEXT_PUBLIC_MARKETPLACE_API_PREFIX = 'https://marketplace.dify.ai/api/v1'
+console.log('process.env.NEXT_PUBLIC_MARKETPLACE_URL_PREFIX:', process.env.NEXT_PUBLIC_MARKETPLACE_URL_PREFIX)
+console.log('process.env.NEXT_PUBLIC_MARKETPLACE_API_PREFIX:', process.env.NEXT_PUBLIC_MARKETPLACE_API_PREFIX)
 if (process.env.NEXT_PUBLIC_MARKETPLACE_API_PREFIX && process.env.NEXT_PUBLIC_MARKETPLACE_URL_PREFIX) {
   marketplaceApiPrefix = process.env.NEXT_PUBLIC_MARKETPLACE_API_PREFIX
   marketplaceUrlPrefix = process.env.NEXT_PUBLIC_MARKETPLACE_URL_PREFIX
