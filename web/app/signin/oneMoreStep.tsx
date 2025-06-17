@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useReducer } from 'react'
+import React, { type Reducer, useEffect, useReducer } from 'react'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import useSWR from 'swr'
@@ -12,6 +12,7 @@ import { timezones } from '@/utils/timezone'
 import { LanguagesSupported, languages } from '@/i18n/language'
 import { oneMoreStep } from '@/service/common'
 import Toast from '@/app/components/base/toast'
+import { useDocLink } from '@/context/i18n'
 
 type IState = {
   formState: 'processing' | 'error' | 'success' | 'initial'
@@ -20,7 +21,14 @@ type IState = {
   timezone: string
 }
 
-const reducer = (state: IState, action: any) => {
+type IAction =
+  | { type: 'failed', payload: null }
+  | { type: 'invitation_code', value: string }
+  | { type: 'interface_language', value: string }
+  | { type: 'timezone', value: string }
+  | { type: 'formState', value: 'processing' }
+
+const reducer: Reducer<IState, IAction> = (state: IState, action: IAction) => {
   switch (action.type) {
     case 'invitation_code':
       return { ...state, invitation_code: action.value }
@@ -44,6 +52,7 @@ const reducer = (state: IState, action: any) => {
 
 const OneMoreStep = () => {
   const { t } = useTranslation()
+  const docLink = useDocLink()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -81,7 +90,7 @@ const OneMoreStep = () => {
       </div>
 
       <div className="mx-auto mt-6 w-full">
-        <div className="bg-white">
+        <div className="relative">
           <div className="mb-5">
             <label className="system-md-semibold my-2 flex items-center justify-between text-text-secondary">
               {t('login.invitationCode')}
@@ -120,7 +129,7 @@ const OneMoreStep = () => {
                 defaultValue={LanguagesSupported[0]}
                 items={languages.filter(item => item.supported)}
                 onSelect={(item) => {
-                  dispatch({ type: 'interface_language', value: item.value })
+                  dispatch({ type: 'interface_language', value: item.value as typeof LanguagesSupported[number] })
                 }}
               />
             </div>
@@ -134,7 +143,7 @@ const OneMoreStep = () => {
                 defaultValue={state.timezone}
                 items={timezones}
                 onSelect={(item) => {
-                  dispatch({ type: 'timezone', value: item.value })
+                  dispatch({ type: 'timezone', value: item.value as typeof state.timezone })
                 }}
               />
             </div>
@@ -157,7 +166,7 @@ const OneMoreStep = () => {
             <Link
               className='system-xs-medium text-text-accent-secondary'
               target='_blank' rel='noopener noreferrer'
-              href={'https://docs.dify.ai/user-agreement/open-source'}
+              href={docLink('/policies/agreement/README')}
             >{t('login.license.link')}</Link>
           </div>
         </div>

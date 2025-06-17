@@ -32,7 +32,6 @@ import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import TextGeneration from '@/app/components/app/text-generate/item'
 import { addFileInfos, sortAgentSorts } from '@/app/components/tools/utils'
 import MessageLogModal from '@/app/components/base/message-log-modal'
-import PromptLogModal from '@/app/components/base/prompt-log-modal'
 import { useStore as useAppStore } from '@/app/components/app/store'
 import { useAppContext } from '@/context/app-context'
 import useTimestamp from '@/hooks/use-timestamp'
@@ -41,6 +40,7 @@ import { CopyIcon } from '@/app/components/base/copy-icon'
 import { buildChatItemTree, getThreadMessages } from '@/app/components/base/chat/utils'
 import { getProcessedFilesFromResponse } from '@/app/components/base/file-uploader/utils'
 import cn from '@/utils/classnames'
+import { noop } from 'lodash-es'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -190,13 +190,11 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
   const { userProfile: { timezone } } = useAppContext()
   const { formatTime } = useTimestamp()
   const { onClose, appDetail } = useContext(DrawerContext)
-  const { currentLogItem, setCurrentLogItem, showMessageLogModal, setShowMessageLogModal, showPromptLogModal, setShowPromptLogModal, currentLogModalActiveTab } = useAppStore(useShallow(state => ({
+  const { currentLogItem, setCurrentLogItem, showMessageLogModal, setShowMessageLogModal, currentLogModalActiveTab } = useAppStore(useShallow(state => ({
     currentLogItem: state.currentLogItem,
     setCurrentLogItem: state.setCurrentLogItem,
     showMessageLogModal: state.showMessageLogModal,
     setShowMessageLogModal: state.setShowMessageLogModal,
-    showPromptLogModal: state.showPromptLogModal,
-    setShowPromptLogModal: state.setShowPromptLogModal,
     currentLogModalActiveTab: state.currentLogModalActiveTab,
   })))
   const { t } = useTranslation()
@@ -356,7 +354,8 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
   }
 
   useEffect(() => {
-    adjustModalWidth()
+    const raf = requestAnimationFrame(adjustModalWidth)
+    return () => cancelAnimationFrame(raf)
   }, [])
 
   return (
@@ -411,7 +410,7 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
               content={detail.message.answer}
               messageId={detail.message.id}
               isError={false}
-              onRetry={() => { }}
+              onRetry={noop}
               isInstalledApp={false}
               supportFeedback
               feedback={detail.message.feedbacks.find((item: any) => item.from_source === 'admin')}
@@ -428,6 +427,7 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
                   text_to_speech: {
                     enabled: true,
                   },
+                  questionEditEnable: false,
                   supportAnnotation: true,
                   annotation_reply: {
                     enabled: true,
@@ -483,6 +483,7 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
                     text_to_speech: {
                       enabled: true,
                     },
+                    questionEditEnable: false,
                     supportAnnotation: true,
                     annotation_reply: {
                       enabled: true,
@@ -515,16 +516,6 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
           defaultTab={currentLogModalActiveTab}
         />
       )}
-      {showPromptLogModal && (
-        <PromptLogModal
-          width={width}
-          currentLogItem={currentLogItem}
-          onCancel={() => {
-            setCurrentLogItem()
-            setShowPromptLogModal(false)
-          }}
-        />
-      )}
     </div>
   )
 }
@@ -546,7 +537,7 @@ const CompletionConversationDetailComp: FC<{ appId?: string; conversationId?: st
       notify({ type: 'success', message: t('common.actionMsg.modifiedSuccessfully') })
       return true
     }
-    catch (err) {
+    catch {
       notify({ type: 'error', message: t('common.actionMsg.modifiedUnsuccessfully') })
       return false
     }
@@ -559,7 +550,7 @@ const CompletionConversationDetailComp: FC<{ appId?: string; conversationId?: st
       notify({ type: 'success', message: t('common.actionMsg.modifiedSuccessfully') })
       return true
     }
-    catch (err) {
+    catch {
       notify({ type: 'error', message: t('common.actionMsg.modifiedUnsuccessfully') })
       return false
     }
@@ -590,7 +581,7 @@ const ChatConversationDetailComp: FC<{ appId?: string; conversationId?: string }
       notify({ type: 'success', message: t('common.actionMsg.modifiedSuccessfully') })
       return true
     }
-    catch (err) {
+    catch {
       notify({ type: 'error', message: t('common.actionMsg.modifiedUnsuccessfully') })
       return false
     }
@@ -602,7 +593,7 @@ const ChatConversationDetailComp: FC<{ appId?: string; conversationId?: string }
       notify({ type: 'success', message: t('common.actionMsg.modifiedSuccessfully') })
       return true
     }
-    catch (err) {
+    catch {
       notify({ type: 'error', message: t('common.actionMsg.modifiedUnsuccessfully') })
       return false
     }
@@ -742,7 +733,7 @@ const ConversationList: FC<IConversationList> = ({ logs, appDetail, onRefresh })
         onClose={onCloseDrawer}
         mask={isMobile}
         footer={null}
-        panelClassname='mt-16 mx-2 sm:mr-2 mb-4 !p-0 !max-w-[640px] rounded-xl bg-components-panel-bg'
+        panelClassName='mt-16 mx-2 sm:mr-2 mb-4 !p-0 !max-w-[640px] rounded-xl bg-components-panel-bg'
       >
         <DrawerContext.Provider value={{
           onClose: onCloseDrawer,

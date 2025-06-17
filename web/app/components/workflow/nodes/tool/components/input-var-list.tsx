@@ -16,6 +16,7 @@ import useAvailableVarList from '@/app/components/workflow/nodes/_base/hooks/use
 import { VarType } from '@/app/components/workflow/types'
 import AppSelector from '@/app/components/plugins/plugin-detail-panel/app-selector'
 import ModelParameterModal from '@/app/components/plugins/plugin-detail-panel/model-selector'
+import { noop } from 'lodash-es'
 
 type Props = {
   readOnly: boolean
@@ -34,7 +35,7 @@ const InputVarList: FC<Props> = ({
   schema,
   value,
   onChange,
-  onOpen = () => { },
+  onOpen = noop,
   isSupportConstantValue,
   filterVar,
 }) => {
@@ -178,7 +179,7 @@ const InputVarList: FC<Props> = ({
               </div>
               {isString && (
                 <Input
-                  className={cn(inputsIsFocus[variable] ? 'border-gray-300 bg-gray-50 shadow-xs' : 'border-gray-100 bg-gray-100', 'rounded-lg border px-3 py-[6px]')}
+                  className={cn(inputsIsFocus[variable] ? 'border-components-input-border-active bg-components-input-bg-active shadow-xs' : 'border-components-input-border-hover bg-components-input-bg-normal', 'rounded-lg border px-3 py-[6px]')}
                   value={varInput?.value as string || ''}
                   onChange={handleMixedTypeChange(variable)}
                   readOnly={readOnly}

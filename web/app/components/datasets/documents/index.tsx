@@ -29,6 +29,7 @@ import { useChildSegmentListKey, useSegmentListKey } from '@/service/knowledge/u
 import useEditDocumentMetadata from '../metadata/hooks/use-edit-dataset-metadata'
 import DatasetMetadataDrawer from '../metadata/metadata-dataset/dataset-metadata-drawer'
 import StatusWithAction from '../common/document-status-with-action/status-with-action'
+import { useDocLink } from '@/context/i18n'
 
 const FolderPlusIcon = ({ className }: React.SVGProps<SVGElement>) => {
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={className ?? ''}>
@@ -68,7 +69,7 @@ const EmptyElement: FC<{ canAdd: boolean; onClick: () => void; type?: 'upload' |
       <div className={s.emptyTip}>
         {t(`datasetDocuments.list.empty.${type}.tip`)}
       </div>
-      {type === 'upload' && canAdd && <Button onClick={onClick} className={s.addFileBtn}>
+      {type === 'upload' && canAdd && <Button onClick={onClick} className={s.addFileBtn} variant='secondary-accent'>
         <PlusIcon className={s.plusIcon} />{t('datasetDocuments.list.addFile')}
       </Button>}
     </div>
@@ -84,6 +85,7 @@ const DEFAULT_LIMIT = 10
 
 const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
   const { t } = useTranslation()
+  const docLink = useDocLink()
   const { plan } = useProviderContext()
   const isFreePlan = plan.type === 'sandbox'
   const [inputValue, setInputValue] = useState<string>('') // the input value
@@ -98,7 +100,6 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
   const isDataSourceWeb = dataset?.data_source_type === DataSourceType.WEB
   const isDataSourceFile = dataset?.data_source_type === DataSourceType.FILE
   const embeddingAvailable = !!dataset?.embedding_available
-
   const debouncedSearchValue = useDebounce(searchValue, { wait: 500 })
 
   const { data: documentsRes, isFetching: isListLoading } = useDocumentList({
@@ -260,7 +261,8 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
           <a
             className='flex items-center text-text-accent'
             target='_blank'
-            href='https://docs.dify.ai/guides/knowledge-base/integrate-knowledge-within-application'>
+            href={docLink('/guides/knowledge-base/integrate-knowledge-within-application')}
+          >
             <span>{t('datasetDocuments.list.learnMore')}</span>
             <RiExternalLinkLine className='h-3 w-3' />
           </a>

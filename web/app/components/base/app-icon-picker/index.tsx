@@ -15,6 +15,7 @@ import getCroppedImg from './utils'
 import type { AppIconType, ImageFile } from '@/types/app'
 import cn from '@/utils/classnames'
 import { DISABLE_UPLOAD_IMAGE_AS_ICON } from '@/config'
+import { noop } from 'lodash-es'
 
 export type AppIconEmojiSelection = {
   type: 'emoji'
@@ -107,14 +108,14 @@ const AppIconPicker: FC<AppIconPickerProps> = ({
   }
 
   return <Modal
-    onClose={() => { }}
+    onClose={noop}
     isShow
     closable={false}
     wrapperClassName={className}
     className={cn(s.container, '!w-[362px] !p-0')}
   >
     {!DISABLE_UPLOAD_IMAGE_AS_ICON && <div className="w-full p-2 pb-0">
-      <div className='flex items-center justify-center gap-2 rounded-xl bg-background-body p-1'>
+      <div className='flex items-center justify-center gap-2 rounded-xl bg-background-body p-1 text-text-primary'>
         {tabs.map(tab => (
           <button
             key={tab.key}

@@ -14,7 +14,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
 
   ### Authentication
 
-  Dify Service API 使用 `API-Key` 进行鉴权。
+  Service API 使用 `API-Key` 进行鉴权。
   <i>**强烈建议开发者把 `API-Key` 放在后端存储，而非分享或者放在客户端存储，以免 `API-Key` 泄露，导致财产损失。**</i>
   所有 API 请求都应在 **`Authorization`** HTTP Header 中包含您的 `API-Key`，如下所示：
 
@@ -59,7 +59,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
         <i>由于 Cloudflare 限制，请求会在 100 秒超时无返回后中断。</i>
       - `user` (string) Required
         用户标识，用于定义终端用户的身份，方便检索、统计。
-        由开发者定义规则，需保证用户标识在应用内唯一。
+        由开发者定义规则，需保证用户标识在应用内唯一。API 无法访问 WebApp 创建的会话。
 
 
     ### Response
@@ -87,7 +87,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
     每个流式块均为 data: 开头，块之间以 `\n\n` 即两个换行符分隔，如下所示：
     <CodeGroup>
     ```streaming {{ title: 'Response' }}
-    data: {"event": "message", "task_id": "900bbd43-dc0b-4383-a372-aa6e6c414227", "id": "663c5084-a254-4040-8ad3-51f2a3c1a77c", "answer": "Hi", "created_at": 1705398420}\n\n
+    data: {"event": "text_chunk", "workflow_run_id": "b85e5fc5-751b-454d-b14e-dc5f240b0a31", "task_id": "bd029338-b068-4d34-a331-fc85478922c2", "data": {"text": "\u4e3a\u4e86", "from_variable_selector": ["1745912968134", "text"]}}\n\n
     ```
     </CodeGroup>
     流式块中根据 `event` 不同，结构也不同，包含以下类型：
@@ -113,6 +113,13 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
         - `predecessor_node_id` (string) 前置节点 ID，用于画布展示执行路径
         - `inputs` (object) 节点中所有使用到的前置节点变量内容
         - `created_at` (timestamp) 开始时间
+    - `event: text_chunk` 文本片段
+      - `task_id` (string) 任务 ID，用于请求跟踪和下方的停止响应接口
+      - `workflow_run_id` (string) workflow 执行 ID
+      - `event` (string) 固定为 `text_chunk`
+      - `data` (object) 详细内容
+        - `text` (string) 文本内容
+        - `from_variable_selector` (array) 文本来源路径，帮助开发者了解文本是由哪个节点的哪个变量生成的
     - `event: node_finished` node 执行结束，成功失败同一事件中不同状态
       - `task_id` (string) 任务 ID，用于请求跟踪和下方的停止响应接口
       - `workflow_run_id` (string) workflow 执行 ID
@@ -318,7 +325,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
 ---
 
 <Heading
-  url='/workflows/run/:workflow_id'
+  url='/workflows/run/:workflow_run_id'
   method='GET'
   title='获取workflow执行情况'
   name='#get-workflow-run-detail'
@@ -327,7 +334,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
   <Col>
     根据 workflow 执行 ID 获取 workflow 任务当前执行结果
     ### Path
-    - `workflow_id` (string) workflow 执行 ID，可在流式返回 Chunk 中获取
+    - `workflow_run_id` (string) workflow_run_id，可在流式返回 Chunk 中获取
     ### Response
     - `id` (string) workflow 执行 ID
     - `workflow_id` (string) 关联的 Workflow ID
@@ -339,13 +346,13 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
     - `total_tokens` (int) 任务执行总 tokens
     - `created_at` (timestamp) 任务开始时间
     - `finished_at` (timestamp) 任务结束时间
-    - `elapsed_time` (float) 耗时(s)
+    - `elapsed_time` (float) 耗时 (s)
   </Col>
   <Col sticky>
     ### Request Example
-    <CodeGroup title="Request" tag="GET" label="/workflows/run/:workflow_id" targetCode={`curl -X GET '${props.appDetail.api_base_url}/workflows/run/:workflow_id' \\\n-H 'Authorization: Bearer {api_key}' \\\n-H 'Content-Type: application/json'`}>
+    <CodeGroup title="Request" tag="GET" label="/workflows/run/:workflow_run_id" targetCode={`curl -X GET '${props.appDetail.api_base_url}/workflows/run/:workflow_run_id' \\\n-H 'Authorization: Bearer {api_key}' \\\n-H 'Content-Type: application/json'`}>
       ```bash {{ title: 'cURL' }}
-      curl -X GET '${props.appDetail.api_base_url}/workflows/run/:workflow_id' \
+      curl -X GET '${props.appDetail.api_base_url}/workflows/run/:workflow_run_id' \
       -H 'Authorization: Bearer {api_key}' \
       -H 'Content-Type: application/json'
       ```
@@ -387,7 +394,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
     - `task_id` (string) 任务 ID，可在流式返回 Chunk 中获取
     ### Request Body
     - `user` (string) Required
-      用户标识，用于定义终端用户的身份，必须和发送消息接口传入 user 保持一致。
+      用户标识，用于定义终端用户的身份，必须和发送消息接口传入 user 保持一致。API 无法访问 WebApp 创建的会话。
     ### Response
     - `result` (string) 固定返回 "success"
   </Col>
@@ -436,7 +443,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
         要上传的文件。
       </Property>
       <Property name='user' type='string' key='user'>
-          用户标识，用于定义终端用户的身份，必须和发送消息接口传入 user 保持一致。
+          用户标识，用于定义终端用户的身份，必须和发送消息接口传入 user 保持一致。服务 API 不会共享 WebApp 创建的对话。
       </Property>
     </Properties>
 
@@ -463,7 +470,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/files/upload" targetCode={`curl -X POST '${props.appDetail.api_base_url}/files/upload' \\\n--header 'Authorization: Bearer {api_key}' \\\n--form 'file=@localfile;type=image/[png|jpeg|jpg|webp|gif] \\\n--form 'user=abc-123'`}>
+    <CodeGroup title="Request" tag="POST" label="/files/upload" targetCode={`curl -X POST '${props.appDetail.api_base_url}/files/upload' \\\n--header 'Authorization: Bearer {api_key}' \\\n--form 'file=@localfile;type=image/[png|jpeg|jpg|webp|gif]' \\\n--form 'user=abc-123'`}>
 
     ```bash {{ title: 'cURL' }}
     curl -X POST '${props.appDetail.api_base_url}/files/upload' \
@@ -498,7 +505,7 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
 />
 <Row>
   <Col>
-    倒序返回workflow日志
+    倒序返回 workflow 日志
 
     ### Query
 
@@ -527,10 +534,10 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
     - `workflow_run` (object) Workflow 执行日志
       - `id` (string) 标识
       - `version` (string) 版本
-      - `status` (string) 执行状态, `running` / `succeeded` / `failed` / `stopped`
+      - `status` (string) 执行状态，`running` / `succeeded` / `failed` / `stopped`
       - `error` (string) (可选) 错误
       - `elapsed_time` (float) 耗时，单位秒
-      - `total_tokens` (int) 消耗的token数量
+      - `total_tokens` (int) 消耗的 token 数量
       - `total_steps` (int) 执行步骤长度
       - `created_at` (timestamp) 开始时间
       - `finished_at` (timestamp) 结束时间
@@ -608,6 +615,8 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
   - `name` (string) 应用名称
   - `description` (string) 应用描述
   - `tags` (array[string]) 应用标签
+  - `mode` (string) 应用模式
+  - 'author_name' (string) 作者名称
   </Col>
   <Col>
     <CodeGroup title="Request" tag="GET" label="/info" targetCode={`curl -X GET '${props.appDetail.api_base_url}/info' \\\n-H 'Authorization: Bearer {api_key}'`}>
@@ -624,7 +633,9 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
       "tags": [
         "tag1",
         "tag2"
-      ]
+      ],
+      "mode": "workflow",
+      "author_name": "Dify"
     }
     ```
     </CodeGroup>
@@ -720,3 +731,57 @@ Workflow 应用无会话支持，适合用于翻译/文章写作/总结 AI 等�
     </CodeGroup>
   </Col>
 </Row>
+
+---
+
+<Heading
+  url='/site'
+  method='GET'
+  title='获取应用 WebApp 设置'
+  name='#site'
+/>
+<Row>
+  <Col>
+  用于获取应用的 WebApp 设置
+  ### Response
+  - `title` (string) WebApp 名称
+  - `icon_type` (string) 图标类型，`emoji`-表情，`image`-图片
+  - `icon` (string) 图标，如果是 `emoji` 类型，则是 emoji 表情符号，如果是 `image` 类型，则是图片 URL
+  - `icon_background` (string) hex 格式的背景色
+  - `icon_url` (string) 图标 URL
+  - `description` (string) 描述
+  - `copyright` (string) 版权信息
+  - `privacy_policy` (string) 隐私政策链接
+  - `custom_disclaimer` (string) 自定义免责声明
+  - `default_language` (string) 默认语言
+  - `show_workflow_steps` (bool) 是否显示工作流详情
+  </Col>
+  <Col>
+  <CodeGroup title="Request" tag="POST" label="/meta" targetCode={`curl -X GET '${props.appDetail.api_base_url}/site' \\\n-H 'Authorization: Bearer {api_key}'`}>
+    ```bash {{ title: 'cURL' }}
+    curl -X GET '${props.appDetail.api_base_url}/site' \
+    -H 'Authorization: Bearer {api_key}'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+    ```json {{ title: 'Response' }}
+    {
+      "title": "My App",
+      "icon_type": "emoji",
+      "icon": "😄",
+      "icon_background": "#FFEAD5",
+      "icon_url": null,
+      "description": "This is my app.",
+      "copyright": "all rights reserved",
+      "privacy_policy": "",
+      "custom_disclaimer": "All generated by AI",
+      "default_language": "en-US",
+      "show_workflow_steps": false,
+    }
+    ```
+    </CodeGroup>
+  </Col>
+</Row>
+___

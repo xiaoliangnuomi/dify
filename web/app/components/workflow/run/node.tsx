@@ -1,7 +1,7 @@
 'use client'
 import { useTranslation } from 'react-i18next'
 import type { FC } from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   RiAlertFill,
   RiArrowRightSLine,
@@ -23,19 +23,22 @@ import type {
   AgentLogItemWithChildren,
   IterationDurationMap,
   LoopDurationMap,
+  LoopVariableMap,
   NodeTracing,
 } from '@/types/workflow'
 import ErrorHandleTip from '@/app/components/workflow/nodes/_base/components/error-handle/error-handle-tip'
 import { hasRetryNode } from '@/app/components/workflow/utils'
+import { useDocLink } from '@/context/i18n'
 
 type Props = {
   className?: string
   nodeInfo: NodeTracing
+  allExecutions?: NodeTracing[]
   inMessage?: boolean
   hideInfo?: boolean
   hideProcessDetail?: boolean
   onShowIterationDetail?: (detail: NodeTracing[][], iterDurationMap: IterationDurationMap) => void
-  onShowLoopDetail?: (detail: NodeTracing[][], loopDurationMap: LoopDurationMap) => void
+  onShowLoopDetail?: (detail: NodeTracing[][], loopDurationMap: LoopDurationMap, loopVariableMap: LoopVariableMap) => void
   onShowRetryDetail?: (detail: NodeTracing[]) => void
   onShowAgentOrToolLog?: (detail?: AgentLogItemWithChildren) => void
   notShowIterationNav?: boolean
@@ -45,6 +48,7 @@ type Props = {
 const NodePanel: FC<Props> = ({
   className,
   nodeInfo,
+  allExecutions,
   inMessage = false,
   hideInfo = false,
   hideProcessDetail,
@@ -62,6 +66,7 @@ const NodePanel: FC<Props> = ({
     doSetCollapseState(state)
   }, [hideProcessDetail])
   const { t } = useTranslation()
+  const docLink = useDocLink()
 
   const getTime = (time: number) => {
     if (time < 1)
@@ -89,6 +94,20 @@ const NodePanel: FC<Props> = ({
   const isRetryNode = hasRetryNode(nodeInfo.node_type) && !!nodeInfo.retryDetail?.length
   const isAgentNode = nodeInfo.node_type === BlockEnum.Agent && !!nodeInfo.agentLog?.length
   const isToolNode = nodeInfo.node_type === BlockEnum.Tool && !!nodeInfo.agentLog?.length
+
+  const inputsTitle = useMemo(() => {
+    let text = t('workflow.common.input')
+    if (nodeInfo.node_type === BlockEnum.Loop)
+      text = t('workflow.nodes.loop.initialLoopVariables')
+    return text.toLocaleUpperCase()
+  }, [nodeInfo.node_type, t])
+  const processDataTitle = t('workflow.common.processData').toLocaleUpperCase()
+  const outputTitle = useMemo(() => {
+    let text = t('workflow.common.output')
+    if (nodeInfo.node_type === BlockEnum.Loop)
+      text = t('workflow.nodes.loop.finalLoopVariables')
+    return text.toLocaleUpperCase()
+  }, [nodeInfo.node_type, t])
 
   return (
     <div className={cn('px-2 py-1', className)}>
@@ -142,6 +161,7 @@ const NodePanel: FC<Props> = ({
             {isIterationNode && !notShowIterationNav && onShowIterationDetail && (
               <IterationLogTrigger
                 nodeInfo={nodeInfo}
+                allExecutions={allExecutions}
                 onShowIterationResultList={onShowIterationDetail}
               />
             )}
@@ -149,6 +169,7 @@ const NodePanel: FC<Props> = ({
             {isLoopNode && !notShowLoopNav && onShowLoopDetail && (
               <LoopLogTrigger
                 nodeInfo={nodeInfo}
+                allExecutions={allExecutions}
                 onShowLoopResultList={onShowLoopDetail}
               />
             )}
@@ -176,7 +197,7 @@ const NodePanel: FC<Props> = ({
                 <StatusContainer status='stopped'>
                   {nodeInfo.error}
                   <a
-                    href='https://docs.dify.ai/guides/workflow/error-handling/error-type'
+                    href={docLink('/guides/workflow/error-handling/error-type')}
                     target='_blank'
                     className='text-text-accent'
                   >
@@ -199,7 +220,7 @@ const NodePanel: FC<Props> = ({
               <div className={cn('mb-1')}>
                 <CodeEditor
                   readOnly
-                  title={<div>{t('workflow.common.input').toLocaleUpperCase()}</div>}
+                  title={<div>{inputsTitle}</div>}
                   language={CodeLanguage.json}
                   value={nodeInfo.inputs}
                   isJSONStringifyBeauty
@@ -210,7 +231,7 @@ const NodePanel: FC<Props> = ({
               <div className={cn('mb-1')}>
                 <CodeEditor
                   readOnly
-                  title={<div>{t('workflow.common.processData').toLocaleUpperCase()}</div>}
+                  title={<div>{processDataTitle}</div>}
                   language={CodeLanguage.json}
                   value={nodeInfo.process_data}
                   isJSONStringifyBeauty
@@ -221,7 +242,7 @@ const NodePanel: FC<Props> = ({
               <div>
                 <CodeEditor
                   readOnly
-                  title={<div>{t('workflow.common.output').toLocaleUpperCase()}</div>}
+                  title={<div>{outputTitle}</div>}
                   language={CodeLanguage.json}
                   value={nodeInfo.outputs}
                   isJSONStringifyBeauty
